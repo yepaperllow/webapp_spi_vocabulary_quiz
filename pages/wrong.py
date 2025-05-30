@@ -17,7 +17,7 @@ df = load_progress()
 if "自信なし" not in df.columns:
     df["自信なし"] = 0
 
-# 統計表示（右上）
+# 統計表示
 with st.container():
     total = len(df)
     unanswered = df[(df["正解数"] == 0) & (df["不正解数"] == 0)].shape[0]
@@ -33,16 +33,16 @@ with st.container():
 
 st.markdown("---")
 
-# ▼ 間違えた語彙一覧表示モード（不正解数が一度でも1以上あったもの）
-if st.checkbox("📋 間違えた語彙一覧を表示"):
+# 間違えた語彙一覧表示モード（不正解数が一度でも1以上あったもの）
+if st.checkbox("間違えた語彙一覧を表示"):
     history_mistakes = df[df["正解数"] + df["不正解数"] > 0]  # 回答済みの中から
     history_mistakes = history_mistakes[history_mistakes["不正解数"] > 0]  # 一度でも間違えたことのあるもの
     history_mistakes = history_mistakes[["単語", "読み方", "単語の意味"]].drop_duplicates()
     st.dataframe(history_mistakes.reset_index(drop=True))
     st.stop()
 
-# ▼ 自信のなかった語彙一覧表示モード
-if st.checkbox("🟡 合っているか自信がなかった語彙一覧を表示"):
+# 自信のなかった語彙一覧表示モード
+if st.checkbox("合っているか自信がなかった語彙一覧を表示"):
     unsure_df = df[df["自信なし"] > 0][["単語", "読み方", "単語の意味"]].drop_duplicates()
     st.dataframe(unsure_df.reset_index(drop=True))
     st.stop()

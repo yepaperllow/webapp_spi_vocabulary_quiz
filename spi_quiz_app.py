@@ -33,7 +33,7 @@ def generate_choices(df, correct_meaning):
     random.shuffle(choices)
     return choices
 
-# データ保存（簡易）
+# データ保存
 def save_progress(df):
     df.to_csv("progress.csv", index=False)
 
@@ -56,8 +56,8 @@ with st.container():
     mistakes = df[df["不正解数"] > 0].shape[0]
     st.markdown(f"""
     <div style='text-align:right;'>
-        <strong>未回答：</strong> {unanswered}　｜　
-        <strong>回答済み：</strong> {answered}　｜　
+        <strong>未回答：</strong> {unanswered}
+        <strong>回答済み：</strong> {answered}
         <strong>間違い：</strong> {mistakes}
     </div>
     """, unsafe_allow_html=True)
