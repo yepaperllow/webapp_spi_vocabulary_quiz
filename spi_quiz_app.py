@@ -2,6 +2,7 @@ import streamlit as st
 import pandas as pd
 import random
 import os
+import random
 
 st.set_page_config(page_title="SPI語彙クイズ", layout="centered")
 st.title("📝 SPI語彙クイズアプリ")
@@ -16,14 +17,37 @@ def load_data():
     return df
 
 # 出題語彙の選択（重み付きランダム）
+# def select_question(df):
+#     weights = []
+#     for _, row in df.iterrows():
+#         weight = 1 + row["不正解数"] - 0.5 * row["正解数"]
+#         weight = max(weight, 0.1)
+#         weights.append(weight)
+#     selected_index = random.choices(range(len(df)), weights=weights, k=1)[0]
+#     return selected_index, df.iloc[selected_index]
+
+# 出題ロジック（未着手の問題が最優先。未着手の問題が存在しない場合は、不正解となった回数が多い問題を優先する。）
 def select_question(df):
-    weights = []
-    for _, row in df.iterrows():
-        weight = 1 + row["不正解数"] - 0.5 * row["正解数"]
-        weight = max(weight, 0.1)
-        weights.append(weight)
-    selected_index = random.choices(range(len(df)), weights=weights, k=1)[0]
-    return selected_index, df.iloc[selected_index]
+    # 1) 未着手の問題をリストアップ
+    unattempted = df[(df["正解数"] == 0) & (df["不正解数"] == 0)].index.tolist()
+    if unattempted:
+        # 未着手がある限りはこちらから一様ランダム
+        selected_index = random.choice(unattempted)
+        return selected_index, df.loc[selected_index]
+
+    # 2) 不正解回数>0 の問題を対象に、回数に比例して重み付け
+    wrong_mask = df["不正解数"] > 0
+    wrong_indices = df.index[wrong_mask].tolist()
+    if wrong_indices:
+        weights = df.loc[wrong_mask, "不正解数"].tolist()
+        selected_index = random.choices(wrong_indices, weights=weights, k=1)[0]
+        return selected_index, df.loc[selected_index]
+
+    # 3) （全て正解のみの場合）残りの問題を一様ランダム
+    all_indices = df.index.tolist()
+    selected_index = random.choice(all_indices)
+    return selected_index, df.loc[selected_index]
+
 
 # 選択肢の作成（正解＋他の選択肢）
 def generate_choices(df, correct_meaning):
@@ -33,7 +57,7 @@ def generate_choices(df, correct_meaning):
     random.shuffle(choices)
     return choices
 
-# データ保存
+# データ保存（簡易）
 def save_progress(df):
     df.to_csv("progress.csv", index=False)
 
@@ -56,8 +80,8 @@ with st.container():
     mistakes = df[df["不正解数"] > 0].shape[0]
     st.markdown(f"""
     <div style='text-align:right;'>
-        <strong>未回答：</strong> {unanswered}
-        <strong>回答済み：</strong> {answered}
+        <strong>未回答：</strong> {unanswered}　｜　
+        <strong>回答済み：</strong> {answered}　｜　
         <strong>間違い：</strong> {mistakes}
     </div>
     """, unsafe_allow_html=True)
